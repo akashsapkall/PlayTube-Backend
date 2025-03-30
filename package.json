@@ -2,8 +2,10 @@
   "name": "youtube",
   "version": "1.0.0",
   "main": "index.js",
+  "type":"module",
   "scripts": {
-    "start": "nodemon index.js"
+    "start":"node src/index.js",
+    "dev": "nodemon src/index.js"
   },
   "author": "akash sapkal",
   "license": "ISC",
