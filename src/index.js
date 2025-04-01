@@ -13,6 +13,7 @@ connectDB()
 .catch((error)=>{
     console.log("DATABASE CONNECTION FAILED !!!!!",error)
 })
+
 app.get('/',(req,res)=>{
     res.send("sdgvjsf");
 })
