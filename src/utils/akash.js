@@ -14,3 +14,13 @@ cloudinary.uploader.upload("1743524102086_defaultAvtar.png", (error, result) => 
     console.log("Cloudinary test success:", result.url);
   }
 });
+
+// const loggedInUser = {
+//     _id: user._id,
+//     fullName: user.fullName,
+//     username: user.username,
+//     email: user.email,
+//     avatar: user.avatar,
+//     coverImg: user.coverImg,
+//     watchHistory: user.watchHistory,
+//   };
