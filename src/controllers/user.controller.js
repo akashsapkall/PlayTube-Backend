@@ -180,6 +180,7 @@ const logoutUser=asyncHandler(async (req, res)=>{
 });
 
 const refreshAccessToken=asyncHandler( async(req,res)=>{
+  try{
   const incomingRefreshToken=req.cookies?.refreshToken || req.body?.refreshToken;
   if(!incomingRefreshToken){
     throw new ApiError(401,"Token Not Available !!");
@@ -213,6 +214,35 @@ const refreshAccessToken=asyncHandler( async(req,res)=>{
         "User Logged In Successfully !"
       )
     );
+  }catch(error){
+    throw new ApiError(401,error.message || "Invalid Refresh Token !!");
+  }
 });
 
+const changeCurrentPassword=asyncHandler(async(req, res)=>{
+  try{
+    const { oldPassword, newPassword }=req.body;
+    if(!oldPassword || !newPassword){
+      throw new ApiError(400,"Both Old and New Password Required!!");
+    }  
+    const user=await User.findById(req.user._id);
+    const isSame=await user.isPasswordCorrect(oldPassword);
+    if(!isSame){
+      throw new ApiError(402,"Old Password Is Incorrect!!");
+    }
+    user.password=newPassword;
+    await user.save({validateBeforeSave:false});
+    return res.status(200)
+    .json(new ApiResponse(200,{},"New Password Has Been Reset"))
+  }catch(error){
+    throw new ApiError(500,"Server Error -unable to set new Password");
+  }
+});
+
+const getCurrentUser=asyncHandler( async(req, res)=>{
+  return res.status(200)
+  .json(
+    new ApiResponse(200,req.user,"Current User Fetched Successfully!")
+  )
+});
 export { registerUser, loginUser, logoutUser, refreshAccessToken }
