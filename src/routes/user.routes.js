@@ -9,6 +9,9 @@ import {
   getCurrentUser,
   updateAccountDetails,
   updateAvatar,
+  updateCoverImg,
+  getUserChannelProfile,
+  getWatchHistory,
 } from "../controllers/user.controller.js";
 // import { authLimiter } from "../utils/rateLimiter.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
@@ -34,16 +37,19 @@ router.post("/logout", verifyToken, logoutUser);
 router.post("/refresh-token", refreshAccessToken);
 router.post("/changepassword", verifyToken, changeCurrentPassword);
 router.get("/getuser", getCurrentUser);
-router.post("/updateuser", verifyToken, updateAccountDetails);
-router.post(
+router.patch("/updateuser", verifyToken, updateAccountDetails);
+router.patch(
   "/updateavatar",
   verifyToken,
-  upload.fields([
-    {
-      name: "avatar",
-      maxCount: 1,
-    },
-  ]),
+  upload.single("avatar"),
   updateAvatar
 );
+router.patch(
+  "/updatecoverimg",
+  verifyToken,
+  upload.single("coverImg"),
+  updateCoverImg
+);
+router.get("/:username", verifyToken, getUserChannelProfile);
+router.get("/watch-history", verifyToken, getWatchHistory);
 export default router;
