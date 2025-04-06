@@ -25,5 +25,14 @@ const uploadOnCloudinary = async (localFilePath) => {
     return null;
   }
 };
-
-export { uploadOnCloudinary };
+const deleteOnCloudinary= async(url)=>{
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+  cloudinary.uploader
+  .destroy(url, { resource_type:"image",type:"authenticated"})
+  .then(result => console.log("Deleted Successfully !!"));
+}
+export { uploadOnCloudinary, deleteOnCloudinary };
