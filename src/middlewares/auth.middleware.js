@@ -15,7 +15,7 @@ const verifyToken=asyncHandler((req, res, next)=>{
         req.user=user;
         return next();
     } catch (error) {
-        let message = "Invalid token";
+        let message = "Authorization Required !!";
         if (error.name === "TokenExpiredError") message = "Token expired";
         if (error.name === "JsonWebTokenError") message = "Malformed token";
         

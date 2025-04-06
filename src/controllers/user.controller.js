@@ -3,7 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { User } from "../models/user.models.js";
-
+import jwt from "jsonwebtoken";
 const generateAccessAndRefreshToken = async (user) => {
   try {
     // const user = await User.findById(userId);
@@ -137,6 +137,7 @@ const loginUser = asyncHandler(async (req, res) => {
     sameSite: "strict",
     maxAge: 7 * 24 * 60 * 60 * 1000
   };
+
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -178,4 +179,70 @@ const logoutUser=asyncHandler(async (req, res)=>{
   .json(new ApiResponse(200,{},"User Logged Out Successfully"))
 });
 
-export { registerUser, loginUser, logoutUser }
+const refreshAccessToken=asyncHandler( async(req,res)=>{
+  try{
+  const incomingRefreshToken=req.cookies?.refreshToken || req.body?.refreshToken;
+  if(!incomingRefreshToken){
+    throw new ApiError(401,"Token Not Available !!");
+  }
+  const userfromIncomingRefreshToken=jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+  const user=await User.findById(userfromIncomingRefreshToken?._id).select("-password");
+  if(!user || user.refreshToken !== incomingRefreshToken){
+    throw new ApiError(401,"Invalid RefreshToken !!");
+  }
+  const { accessToken, refreshToken }=await generateAccessAndRefreshToken(user);
+  
+  const options = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user,
+          accessToken,
+          refreshToken,
+        },
+        "User Logged In Successfully !"
+      )
+    );
+  }catch(error){
+    throw new ApiError(401,error.message || "Invalid Refresh Token !!");
+  }
+});
+
+const changeCurrentPassword=asyncHandler(async(req, res)=>{
+  try{
+    const { oldPassword, newPassword }=req.body;
+    if(!oldPassword || !newPassword){
+      throw new ApiError(400,"Both Old and New Password Required!!");
+    }  
+    const user=await User.findById(req.user._id);
+    const isSame=await user.isPasswordCorrect(oldPassword);
+    if(!isSame){
+      throw new ApiError(402,"Old Password Is Incorrect!!");
+    }
+    user.password=newPassword;
+    await user.save({validateBeforeSave:false});
+    return res.status(200)
+    .json(new ApiResponse(200,{},"New Password Has Been Reset"))
+  }catch(error){
+    throw new ApiError(500,"Server Error -unable to set new Password");
+  }
+});
+
+const getCurrentUser=asyncHandler( async(req, res)=>{
+  return res.status(200)
+  .json(
+    new ApiResponse(200,req.user,"Current User Fetched Successfully!")
+  )
+});
+export { registerUser, loginUser, logoutUser, refreshAccessToken }
