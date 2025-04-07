@@ -50,6 +50,6 @@ router.patch(
   upload.single("coverImg"),
   updateCoverImg
 );
-router.get("/:username", verifyToken, getUserChannelProfile);
 router.get("/watch-history", verifyToken, getWatchHistory);
+router.get("/:username", verifyToken, getUserChannelProfile);
 export default router;
