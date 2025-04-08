@@ -390,7 +390,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
         isSubscribed: {
           $cond: {
-            if: { $in: [req.user._id, "$subscribers.subscriber"] },
+            if: { $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers.subscriber"] },
             then: true,
             else: false,
           },
@@ -455,19 +455,25 @@ const getWatchHistory = asyncHandler(async (req, res) => {
           {
             $addFields:{
               owner:{
-                $first:"$owner"
+                $arrayElemAt:["$owner",0]
+                // $first:"$owner"
               }
             }
           }
         ],
       },
-    },
+    },{
+      $project:{
+        watchHistory:1,
+      }
+    }
   ]);
-  if(!user){
+  console.log("USER:",user);
+  if(user.length === 0 ){
     throw new ApiError(400,"user Not Found !!")
   }
   return res.status(200)
-  .json(new ApiResponse(200,user[0].watchHistory||[],'User watchHistory fetched Successfully!!'))
+  .json(new ApiResponse(200,user.watchHistory || [], 'User watchHistory fetched Successfully!!'))
 });
 export {
   registerUser,
