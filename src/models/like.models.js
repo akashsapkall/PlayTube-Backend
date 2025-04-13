@@ -25,7 +25,8 @@ const likeSchema = new mongoose.Schema(
   },
   { timestamps: true } // Automatically manages createdAt and updatedAt
 );
-
+likeSchema.index({ likeable: 1, onModel: 1 }); // Optimized for content queries
+likeSchema.index({ owner: 1 }); // Optimized for user-centric queries
 export const Like = mongoose.model("Like", likeSchema);
 
 // import mongoose from "mongoose";
