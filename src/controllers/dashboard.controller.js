@@ -87,48 +87,48 @@ const getChannelStats = asyncHandler(async (req, res) => {
             commentIds: "$comments._id",
             tweetIds: "$tweets._id",
           },
-        },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $or: [
-                  {
-                    $and: [
-                      {
-                        $in: ["$likeable", "$$videoIds"],
-                      },
-                      {
-                        $eq: ["$onModel", "Video"],
-                      },
-                    ],
-                  },
-                  {
-                    $and: [
-                      {
-                        $in: ["$likeable", "$$commentIds"],
-                      },
-                      {
-                        $eq: ["$onModel", "Comment"],
-                      },
-                    ],
-                  },
-                  {
-                    $and: [
-                      {
-                        $in: ["$likeable", "$$tweetIds"],
-                      },
-                      {
-                        $eq: ["$onModel", "Tweet"],
-                      },
-                    ],
-                  },
-                ],
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    {
+                      $and: [
+                        {
+                          $in: ["$likeable", "$$videoIds"],
+                        },
+                        {
+                          $eq: ["$onModel", "Video"],
+                        },
+                      ],
+                    },
+                    {
+                      $and: [
+                        {
+                          $in: ["$likeable", "$$commentIds"],
+                        },
+                        {
+                          $eq: ["$onModel", "Comment"],
+                        },
+                      ],
+                    },
+                    {
+                      $and: [
+                        {
+                          $in: ["$likeable", "$$tweetIds"],
+                        },
+                        {
+                          $eq: ["$onModel", "Tweet"],
+                        },
+                      ],
+                    },
+                  ],
+                },
               },
             },
-          },
-        ],
+          ],
         as: "likes",
+        }
       },
       {
         $addFields: {
