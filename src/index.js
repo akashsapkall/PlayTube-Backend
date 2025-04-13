@@ -12,6 +12,7 @@ connectDB()
 })
 .catch((error)=>{
     console.log("DATABASE CONNECTION FAILED !!!!!",error)
+    process.exit(1);
 })
 
 app.get('/',(req,res)=>{
