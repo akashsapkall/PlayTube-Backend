@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Comment } from "../models/comment.models.js";
+import { Like } from "../models/like.models.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -116,14 +117,19 @@ const getVideoComments = asyncHandler(async (req, res) => {
 });
 
 const addComment = asyncHandler(async (req, res) => {
-  const { content, videoId } = req.body;
-  if (!content || !videoId) {
-    throw new ApiError(400, "Content and video ID are required!");
+  const { videoId } =req.params;
+  const { content } = req.body;
+  console.log(content);
+  if(!mongoose.Types.ObjectId.isValid(videoId)){
+    throw new ApiError(400, "inValid Video Id");
+  }
+  if (!content) {
+    throw new ApiError(400, "Content Is required!");
   }
   const newComment = await Comment.create({
     content,
     owner: req.user._id,
-    video: mongoose.Types.ObjectId(videoId),
+    video: videoId,
   });
   if (!newComment) {
     throw new ApiError(500, "Failed To Create Comment!!");
@@ -134,9 +140,10 @@ const addComment = asyncHandler(async (req, res) => {
 });
 
 const updateComment = asyncHandler(async (req, res) => {
-  const { updatedContent, commentId } = req.body;
-  if (!updatedContent || !commentId) {
-    throw new ApiError(400, "Content and comment ID are required!");
+  const { commentId } =req.params;
+  const { updatedContent } = req.body;
+  if (!updatedContent) {
+    throw new ApiError(400, "Content is required!");
   }
   if (!mongoose.Types.ObjectId.isValid(commentId)) {
     throw new ApiError(400, "Comment id is invalid !!");
@@ -169,10 +176,8 @@ const updateComment = asyncHandler(async (req, res) => {
 });
 
 const deleteComment = asyncHandler(async (req, res) => {
-  const { commentId } = req.body;
-  if (!commentId) {
-    throw new ApiError(400, "comment ID are required!");
-  }
+  const { commentId } = req.params;
+  
   if (!mongoose.Types.ObjectId.isValid(commentId)) {
     throw new ApiError(400, "Comment id is invalid !!");
   }
@@ -192,10 +197,13 @@ const deleteComment = asyncHandler(async (req, res) => {
   if (!deleteComment) {
     throw new ApiError(500, "Failed To Delete Comment!!");
   }
-
+  await Like.deleteMany({
+    likeable:commentId,
+    onModel:"Comment",
+  })
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "comment deleted successfully!!"));
+    .json(new ApiResponse(200, deleteComment, "comment deleted successfully!!"));
 });
 
 export { getVideoComments, addComment, updateComment, deleteComment };
