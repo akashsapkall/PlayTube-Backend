@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { upload } from "../middlewares/multer.middleware.js";
+import { uploadDisc } from "../middlewares/multer.middleware.js";
 import {
   registerUser,
   loginUser,
@@ -19,7 +19,7 @@ const router = Router();
 
 router.post(
   "/register",
-  upload.fields([
+  uploadDisc.fields([
     {
       name: "avatar",
       maxCount: 1,
@@ -41,13 +41,13 @@ router.patch("/updateuser", verifyToken, updateAccountDetails);
 router.patch(
   "/updateavatar",
   verifyToken,
-  upload.single("avatar"),
+  uploadDisc.single("avatar"),
   updateAvatar
 );
 router.patch(
   "/updatecoverimg",
   verifyToken,
-  upload.single("coverImg"),
+  uploadDisc.single("coverImg"),
   updateCoverImg
 );
 router.get("/watch-history", verifyToken, getWatchHistory);
