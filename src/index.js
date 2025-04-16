@@ -1,11 +1,12 @@
 import dotenv from 'dotenv';
 import app from './app.js';
 import connectDB from './db/index.js';
-
+import { configCloudinary } from"./utils/cloudinary.js";
 dotenv.config();
 
 connectDB()
 .then(()=>{
+    configCloudinary();
     app.listen(process.env.PORT || 3000,()=>{
         console.log(`Server is listening on port no ${process.env.PORT}`);
     });
@@ -15,9 +16,9 @@ connectDB()
     process.exit(1);
 })
 
-app.get('/',(req,res)=>{
-    res.send("sdgvjsf");
-})
+// app.get('/',(req,res)=>{
+//     res.send("sdgvjsf");
+// })
 
 
 
