@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 // import { globalLimiter } from "./utils/rateLimiter.js";
-import { verifyToken } from "./middlewares/auth.middleware.js";
+// import { verifyToken } from "./middlewares/auth.middleware.js";
 
 import userRouter from './routes/user.routes.js';
 import videoRouter from "./routes/video.routes.js";
