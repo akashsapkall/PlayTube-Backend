@@ -1,7 +1,10 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+import {
+  uploadOnCloudinary,
+  deleteFromCloudinary,
+} from "../utils/cloudinary.js";
 import { User } from "../models/user.models.js";
 import jwt from "jsonwebtoken";
 import validator from "validator";
@@ -31,7 +34,7 @@ const generateAccessAndRefreshToken = async (user) => {
 
 const registerUser = asyncHandler(async (req, res) => {
   const { username, fullName, email, password } = req.body;
-  // console.log("REQUEST BODY:",req.body);
+  console.log("REQUEST BODY:",req.body);
   // Check for empty fields
   if ([username, fullName, email, password].some((field) => !field?.trim())) {
     throw new ApiError(400, "All fields are required!");
@@ -44,28 +47,28 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   // Handle avatar (required)
-  // console.log("REQUEST FILES:",req.files);
+  console.log("REQUEST FILES:",req.files);
   const avatarFile = req.files?.avatar;
   if (!avatarFile || avatarFile.length === 0) {
     throw new ApiError(400, "Avatar file is required!");
   }
-  const avatarLocalPath = avatarFile[0].path;
+  const avatarLocalPath = avatarFile[0]?.path;
 
   // Handle coverImg (optional)
   let coverImgLocalPath;
   if (req.files?.coverImg && req.files.coverImg.length > 0) {
-    coverImgLocalPath = req.files.coverImg[0].path;
+    coverImgLocalPath = req.files?.coverImg[0]?.path || "";
   }
 
   // Upload to Cloudinary
-  const avatar = await uploadOnCloudinary(avatarLocalPath,"xTubeAvatar");
+  const avatar = await uploadOnCloudinary(avatarLocalPath, "xTubeAvatar");
   if (!avatar?.url) {
     throw new ApiError(500, "Failed to upload avatar!");
   }
 
-  let coverImg;
+  let coverImg='';
   if (coverImgLocalPath) {
-    coverImg = await uploadOnCloudinary(coverImgLocalPath,"xTubeCoverImg");
+    coverImg = await uploadOnCloudinary(coverImgLocalPath, "xTubeCoverImg");
     if (!coverImg?.url) {
       throw new ApiError(500, "Failed to upload cover image!");
     }
@@ -77,13 +80,16 @@ const registerUser = asyncHandler(async (req, res) => {
     username: username.toLowerCase(),
     email,
     password,
-    avatar: {url:avatar.url, publicId:avatar.public_id},
-    coverImg: {url:coverImg.url, publicId:coverImg.public_id} || {url:"", publicId:""},
+    avatar: { url: avatar.url, publicId: avatar.public_id },
+    coverImg: { url: coverImg.url, publicId: coverImg.public_id } || {
+      url: "",
+      publicId: "",
+    },
   });
-  if(!user){
+  if (!user) {
     await Promise.all([
       avatar?.public_id && deleteFromCloudinary(avatar.public_id),
-      coverImg?.public_id && deleteFromCloudinary(coverImg.public_id)
+      coverImg?.public_id && deleteFromCloudinary(coverImg.public_id),
     ]);
     throw new ApiError(500, "Failed to register user!");
   }
@@ -103,16 +109,19 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
   // validator.isEmail(emailorUsername)
-  // console.log(req.body);
-  const { username, email, password } = req.body;
-  if (!username && !email) {
+  console.log(req.body);
+  const { emailOrUsername, password } = req.body;
+  if (!emailOrUsername) {
     throw new ApiError(400, "username or email required !!");
   }
   if (!password) {
     throw new ApiError(400, "password is required !!");
   }
   const user = await User.findOne({
-    $or: [{ username }, { email: email?.toLowerCase() }],
+    $or: [
+      { username: emailOrUsername?.trim().toLowerCase() },
+      { email: emailOrUsername?.trim().toLowerCase() },
+    ],
   });
   if (!user) {
     throw new ApiError(404, "Invalid Credentials !!");
@@ -143,8 +152,8 @@ const loginUser = asyncHandler(async (req, res) => {
   };
 
   const options = {
-    httpOnly: true,
-    secure: true,
+    // httpOnly: true,
+    // secure: true,
     sameSite: "strict",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
@@ -214,8 +223,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       await generateAccessAndRefreshToken(user);
 
     const options = {
-      httpOnly: true,
-      secure: true,
+      // httpOnly: true,
+      // secure: true,
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
@@ -306,13 +315,13 @@ const updateAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(400, "File Upload FAILED !!");
   }
   const localFilePath = avatarFile?.path;
-  const user=await User.findById(req.user._id).select("avatar");
-  if(!user){
+  const user = await User.findById(req.user._id).select("avatar");
+  if (!user) {
     throw new ApiError(404, "User Not Found or unauthorized!!");
   }
   const response = await uploadOnCloudinary(localFilePath, "xTubeAvatar");
   if (!response?.url) {
-    if(response?.public_id){
+    if (response?.public_id) {
       await deleteFromCloudinary(response.public_id);
     }
     throw ApiError(500, "Failed To Upload On Cloudinary !!");
@@ -323,7 +332,7 @@ const updateAvatar = asyncHandler(async (req, res) => {
   }
   const updatedProfile = await User.findByIdAndUpdate(
     req.user._id,
-    { $set: { avatar: { url:response.url,publicId:response.public_id} } },
+    { $set: { avatar: { url: response.url, publicId: response.public_id } } },
     {
       new: true,
       runValidators: true,
@@ -345,12 +354,12 @@ const updateCoverImg = asyncHandler(async (req, res) => {
   if (!coverFile) {
     throw new ApiError(400, "File Upload FAILED !!");
   }
-  const user=await User.findById(req.user._id).select("coverImg");
+  const user = await User.findById(req.user._id).select("coverImg");
   const localFilePath = coverFile?.path;
-  const response = await uploadOnCloudinary(localFilePath,"xTubeCoverImg");
+  const response = await uploadOnCloudinary(localFilePath, "xTubeCoverImg");
   if (!response) {
     if (response?.public_id) {
-    await deleteFromCloudinary(response.public_id);
+      await deleteFromCloudinary(response.public_id);
     }
     throw ApiError(500, "Failed To Upload On Cloudinary !!");
   }
@@ -359,7 +368,9 @@ const updateCoverImg = asyncHandler(async (req, res) => {
   }
   const updatedProfile = await User.findByIdAndUpdate(
     req.user._id,
-    { $set: { coverImg: {url:response?.url,publicId:response?.public_id}} },
+    {
+      $set: { coverImg: { url: response?.url, publicId: response?.public_id } },
+    },
     {
       new: true,
       runValidators: true,
@@ -412,7 +423,12 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
         isSubscribed: {
           $cond: {
-            if: { $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers.subscriber"] },
+            if: {
+              $in: [
+                new mongoose.Types.ObjectId(req.user._id),
+                "$subscribers.subscriber",
+              ],
+            },
             then: true,
             else: false,
           },
@@ -447,7 +463,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
     {
       $match: {
-        _id: new mongoose.Types.ObjectId(req.user?._id)
+        _id: new mongoose.Types.ObjectId(req.user?._id),
       },
     },
     {
@@ -465,42 +481,55 @@ const getWatchHistory = asyncHandler(async (req, res) => {
               as: "owner",
               pipeline: [
                 {
-                  $project:{
-                    fullName:1,
-                    username:1,
-                    avatar:1
-                  }
-                }
+                  $project: {
+                    fullName: 1,
+                    username: 1,
+                    avatar: 1,
+                  },
+                },
               ],
             },
           },
           {
-            $addFields:{
-              owner:{
-                $arrayElemAt:["$owner",0]
+            $addFields: {
+              owner: {
+                $arrayElemAt: ["$owner", 0],
                 // $first:"$owner"
-              }
-            }
-          }
+              },
+            },
+          },
         ],
       },
-    },{
-      $project:{
-        watchHistory:1,
-      }
-    }
+    },
+    {
+      $project: {
+        watchHistory: 1,
+      },
+    },
   ]);
-  console.log("USER:",user);
-  if(user.length === 0 ){
-    throw new ApiError(400,"user Not Found !!")
+  console.log("USER:", user);
+  if (user.length === 0) {
+    throw new ApiError(400, "user Not Found !!");
   }
-  return res.status(200)
-  .json(new ApiResponse(200,user.watchHistory || [], 'User watchHistory fetched Successfully!!'))
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        user.watchHistory || [],
+        "User watchHistory fetched Successfully!!"
+      )
+    );
 });
-
+const checkAuth= asyncHandler( async(req, res) => {
+  if (!req.user){
+    throw new ApiError(401,"User Not Logged In!!");
+  }
+  return res.status(200).json( new ApiResponse(200,req.user,"user logged in!!")); 
+});
 export {
   registerUser,
-  loginUser,  
+  loginUser,
   logoutUser,
   refreshAccessToken,
   changeCurrentPassword,
@@ -509,15 +538,15 @@ export {
   updateAvatar,
   updateCoverImg,
   getUserChannelProfile,
-  getWatchHistory
+  getWatchHistory,
+  checkAuth
 };
-
 
 // {
 //   asset_id: 'fdcfdb23eb96e4ad7e64d7720a92cdd9',
-//   public_id: 'xTubeCoverImg/dd2ofr6ex9sveslhxoxs',      
+//   public_id: 'xTubeCoverImg/dd2ofr6ex9sveslhxoxs',
 //   version: 1744642216,
-//   version_id: '2570ee336a7775318ba99c77757beec7',       
+//   version_id: '2570ee336a7775318ba99c77757beec7',
 //   signature: '578df18399d328fd53b34b4ce190bb4a64493adc',
 //   width: 1080,
 //   height: 729,

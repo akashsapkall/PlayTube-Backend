@@ -12,6 +12,7 @@ import {
   updateCoverImg,
   getUserChannelProfile,
   getWatchHistory,
+  checkAuth
 } from "../controllers/user.controller.js";
 // import { authLimiter } from "../utils/rateLimiter.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
@@ -52,4 +53,5 @@ router.patch(
 );
 router.get("/watch-history", verifyToken, getWatchHistory);
 router.get("/:username", verifyToken, getUserChannelProfile);
+router.get("/auth/check", verifyToken, checkAuth);
 export default router;
