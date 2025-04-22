@@ -74,3 +74,62 @@ JWT_EXPIRY=7d
 ```bash
 npm run dev
 ```
+## API Endpoints 📡
+
+### Authentication
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/auth/register` | POST | User registration |
+| `/api/v1/auth/login` | POST | User login |
+
+### Videos
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/videos` | POST | Upload video |
+| `/api/v1/videos/:videoId` | GET | Get video details |
+
+### Users
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/users/channel/:userId` | GET | Get channel stats |
+
+### Playlists
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/playlists` | POST | Create playlist |
+
+### Comments
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/comments/:videoId` | POST | Add comment |
+
+**[View Full API Documentation](API_DOCS.md)**
+
+## Future Scope 🚀
+
+### Upcoming Features
+- 🌐 Live streaming capability using WebRTC
+- 🔄 Multiple account switching
+- 📱 OAuth 2.0 social logins
+- 🎞️ Video transcoding for adaptive streaming
+- 🤖 AI-powered recommendations
+- 💸 Monetization system
+- 📱 Progressive Web App (PWA) support
+
+### Performance Improvements
+- 🚀 GraphQL API implementation
+- 🔄 Database sharding
+- 🧩 Microservices architecture
+- 📊 Advanced caching with Redis
+
+## Architecture Highlights 🏗️
+
+```mermaid
+graph TD
+  A[Client] --> B[API Gateway]
+  B --> C[Auth Service]
+  B --> D[Video Service]
+  B --> E[User Service]
+  D --> F[Cloudinary]
+  E --> G[MongoDB]
+  C --> H[JWT]
