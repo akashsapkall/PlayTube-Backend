@@ -53,7 +53,7 @@ A YouTube-like video streaming platform built with Node.js, Express, and MongoDB
 
 1. Clone repository:
 ```bash
-git clone https://github.com/yourusername/playtube-backend.git
+git clone https://github.com/akashsapkall/playtube-backend.git
 cd playtube-backend
 ```
 2. Install dependencies:
