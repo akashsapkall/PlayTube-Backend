@@ -251,6 +251,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
+  console.log(req.body);
   if (!oldPassword?.trim() || !newPassword?.trim()) {
     throw new ApiError(400, "Both Old and New Password Required!!");
   }
