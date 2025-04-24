@@ -7,13 +7,17 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 
 
 const createPlaylist = asyncHandler(async (req, res) => {
-    const {name, description} = req.body
+    const {name, description, status='PRIVATE' } = req.body
     if(!name){
         throw new ApiError(400, "name required!!")
+    }
+    if(!status){
+        throw new ApiError(400, "status required!!")
     }
     const playlist=await Playlist.create({
         name:name,
         description:description,
+        status:status || 'PRIVATE',
         videos:[],
         owner:req.user?._id,
     });
@@ -24,7 +28,7 @@ const createPlaylist = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201,playlist,"playlist created successfully!!"))
 })
 
-const getUserPlaylists = asyncHandler(async (req, res) => {
+const getUsersAllPlaylists = asyncHandler(async (req, res) => {
     const userId = req.user?._id;
     if(!mongoose.Types.ObjectId.isValid(userId)){
         throw new ApiError(400,"Invalid user Id!!")
@@ -38,16 +42,37 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200,playlists,"playlists fetched successfully!!")); 
 });
 
+const getUsersPublicPlaylists=asyncHandler( async (req,res)=>{
+    const userId=req.params?.userId;
+    if(!mongoose.Types.ObjectId.isValid(userId)){
+        throw new ApiError(400,"Invalid user Id!!")
+    }
+    const playlists=await Playlist.find({owner:userId, status:'PUBLIC'});
+    if(!playlists || playlists.length === 0){
+        return res.status(200)
+        .json(new ApiResponse(200,[], "No Playlist Found For This user!!"));
+    }
+    return res.status(200)
+    .json(new ApiResponse(200,playlists,"playlists fetched successfully!!")); 
+});
 const getPlaylistById = asyncHandler(async (req, res) => {
-    const { playlistId } = req.params
+    const { playlistId } = req.params;
+    const userId=req.user._id;
     if(!mongoose.Types.ObjectId.isValid(playlistId)){
         throw new ApiError(400,"Invalid playlist Id!!")
+    }
+    if(!mongoose.Types.ObjectId.isValid(userId)){
+        throw new ApiError(400,"Invalid user Id!!")
     }
     const playlist=await Playlist.findById(playlistId)
     .populate("videos");
     // .populate("owner");
     if(!playlist){
         throw new ApiError(400,"No Playlist With The Id Exist!!")
+    }
+    if((playlist.owner.toString() !== userId.toString()) && playlist.status === 'PRIVATE')
+    {
+        throw new ApiError(401,"Not Authorized To Access Thi Playlist!!")
     }
     return res.status(200)
     .json(new ApiResponse(200,playlist,"Playlist fetched successfully!!"))
@@ -131,7 +156,7 @@ const deletePlaylist = asyncHandler(async (req, res) => {
 
 const updatePlaylist = asyncHandler(async (req, res) => {
     const {playlistId} = req.params
-    const {name, description} = req.body
+    const {name, description, status} = req.body
     if(!mongoose.isValidObjectId(playlistId)){
         throw new ApiError(400,"Invalid playlist Id!!")
     }
@@ -140,6 +165,7 @@ const updatePlaylist = asyncHandler(async (req, res) => {
             $set:{
                 name:name,
                 description:description,
+                status:status,
             }
         },
         { new: true}
@@ -154,7 +180,8 @@ const updatePlaylist = asyncHandler(async (req, res) => {
 
 export {
     createPlaylist,
-    getUserPlaylists,
+    getUsersAllPlaylists,
+    getUsersPublicPlaylists,
     getPlaylistById,
     addVideoToPlaylist,
     removeVideoFromPlaylist,
