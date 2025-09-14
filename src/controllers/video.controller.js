@@ -12,23 +12,29 @@ import {
 } from "../utils/cloudinary.js";
 
 const getVideos = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+  const { query, page = 1, limit = 10 } = req.query;
   const pageNumber = parseInt(page);
   const limitOnPage = parseInt(limit);
   const skip = (pageNumber - 1) * limitOnPage;
 
-  const match = { isPublished: true };
+  const searchRegex = new RegExp(query, "i");
 
-  if (userId) {
-    match.owner = new mongoose.Types.ObjectId(userId);
-  }
+  // 1. First find all users matching the search query
+  const matchingUsers = await User.find({
+    $or: [{ username: searchRegex }, { fullName: searchRegex }],
+  }).select("_id");
+  // const match = { isPublished: true };
 
-  if (query) {
-    match.$or = [
-      { title: { $regex: query, $options: "i" } },
-      { description: { $regex: query, $options: "i" } },
-    ];
-  }
+  // if (userId) {
+  //   match.owner = new mongoose.Types.ObjectId(userId);
+  // }
+
+  // if (query) {
+  //   match.$or = [
+  //     { title: { $regex: query, $options: "i" } },
+  //     { description: { $regex: query, $options: "i" } },
+  //   ];
+  // }
 
   const sortStage = {};
 
@@ -42,7 +48,15 @@ const getVideos = asyncHandler(async (req, res) => {
 
   const pipeline = [
     {
-      $match: match,
+      $match: {
+        isPublished: true,
+        $or: [
+          // Match video content
+          { $or: [{ title: searchRegex }, { description: searchRegex }] },
+          // Match owner ID from user search
+          { owner: { $in: matchingUsers.map((u) => u._id) } },
+        ],
+      },
     },
     {
       $lookup: {
@@ -76,6 +90,9 @@ const getVideos = asyncHandler(async (req, res) => {
                   },
                   {
                     $eq: ["$onModel", "Video"],
+                  },
+                  {
+                    $eq: ["$action", "LIKED"],
                   },
                 ],
               },
@@ -266,12 +283,15 @@ const getVideoById = asyncHandler(async (req, res) => {
                   {
                     $eq: ["$onModel", "Video"],
                   },
+                  {
+                    $eq: ["$action", "LIKED"],
+                  },
                 ],
               },
             },
           },
         ],
-        as:"likes",
+        as: "likes",
       },
     },
     {
@@ -334,8 +354,8 @@ const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   const { title, description } = req.body;
   const thumbnailFile = req.file;
-  console.log("TITLE:",title);
-  console.log("DESC:",description);
+  console.log("TITLE:", title);
+  console.log("DESC:", description);
   // Validate videoId
   if (!mongoose.Types.ObjectId.isValid(videoId)) {
     throw new ApiError(400, "Invalid Video ID!");
@@ -348,12 +368,17 @@ const updateVideo = asyncHandler(async (req, res) => {
   });
 
   if (!video) {
-    throw new ApiError(404, "Video not found or you do not have permission to update it!");
+    throw new ApiError(
+      404,
+      "Video not found or you do not have permission to update it!"
+    );
   }
 
   // Preserve existing values if not provided in the request
   const updatedTitle = title ? title.trim() : video.title;
-  const updatedDescription =description ? description.trim() : video.description;
+  const updatedDescription = description
+    ? description.trim()
+    : video.description;
 
   // Handle thumbnail upload
   let thumbnailUrl = video.thumbnail.url;
@@ -407,9 +432,9 @@ const updateVideo = asyncHandler(async (req, res) => {
   }
 
   // Return the updated video in the response
-  return res.status(200).json(
-    new ApiResponse(200, updatedVideo, "Video updated successfully!")
-  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedVideo, "Video updated successfully!"));
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
@@ -427,7 +452,10 @@ const deleteVideo = asyncHandler(async (req, res) => {
   });
 
   if (!deletedVideo) {
-    throw new ApiError(404, "Video not found or you do not have permission to delete it!");
+    throw new ApiError(
+      404,
+      "Video not found or you do not have permission to delete it!"
+    );
   }
 
   // Delete associated files from Cloudinary
@@ -438,10 +466,16 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
   // Log errors if any deletion fails
   if (videoFileResult.status === "rejected") {
-    console.error("Failed to delete video file from Cloudinary:", videoFileResult.reason);
+    console.error(
+      "Failed to delete video file from Cloudinary:",
+      videoFileResult.reason
+    );
   }
   if (thumbnailResult.status === "rejected") {
-    console.error("Failed to delete thumbnail from Cloudinary:", thumbnailResult.reason);
+    console.error(
+      "Failed to delete thumbnail from Cloudinary:",
+      thumbnailResult.reason
+    );
   }
 
   // Delete related likes and comments
@@ -455,9 +489,15 @@ const deleteVideo = asyncHandler(async (req, res) => {
   });
 
   // Return a success response
-  return res.status(200).json(
-    new ApiResponse(200, deletedVideo, "Video and related likes and comments deleted successfully!")
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        deletedVideo,
+        "Video and related likes and comments deleted successfully!"
+      )
+    );
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
@@ -495,13 +535,22 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 
   // Handle empty results
   if (!updatedVideo) {
-    throw new ApiError(404, "Video not found or you do not have permission to update it!");
+    throw new ApiError(
+      404,
+      "Video not found or you do not have permission to update it!"
+    );
   }
 
   // Return a success response
-  return res.status(200).json(
-    new ApiResponse(200, { isPublished: updatedVideo.isPublished }, "Publish status updated successfully!")
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { isPublished: updatedVideo.isPublished },
+        "Publish status updated successfully!"
+      )
+    );
 });
 
 export {
