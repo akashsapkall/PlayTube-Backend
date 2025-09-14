@@ -101,6 +101,9 @@ const getChannelStats = asyncHandler(async (req, res) => {
                         {
                           $eq: ["$onModel", "Video"],
                         },
+                        {
+                          $eq: ["$action", "LIKED"],
+                        },
                       ],
                     },
                     {
@@ -111,6 +114,9 @@ const getChannelStats = asyncHandler(async (req, res) => {
                         {
                           $eq: ["$onModel", "Comment"],
                         },
+                        {
+                          $eq: ["$action", "LIKED"],
+                        },
                       ],
                     },
                     {
@@ -120,6 +126,9 @@ const getChannelStats = asyncHandler(async (req, res) => {
                         },
                         {
                           $eq: ["$onModel", "Tweet"],
+                        },
+                        {
+                          $eq: ["$action", "LIKED"],
                         },
                       ],
                     },

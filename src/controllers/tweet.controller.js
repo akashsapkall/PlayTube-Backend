@@ -67,6 +67,9 @@ const getUserTweets = asyncHandler(async (req, res) => {
                     {
                       $eq: ["$onModel", "Tweet"],
                     },
+                    {
+                      $eq: ["$action", "LIKED"],
+                    },
                   ],
                 },
               },

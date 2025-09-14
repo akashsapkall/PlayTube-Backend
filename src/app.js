@@ -46,7 +46,7 @@ app.use("/api/v1/healthcheck", healthcheckRouter);
 //   next(new ApiError(404, "Route not found"));
 // });
 
-// ✅ GLOBAL ERROR HANDLER - THIS MUST BE LAST
+// GLOBAL ERROR HANDLER - THIS MUST BE LAST
 app.use((err, req, res, next) => {
   console.log(err);
   const statusCode = err.statusCode || 500;
