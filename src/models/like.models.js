@@ -8,7 +8,11 @@ const likeSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-
+    action: {
+      type: "String",
+      required: true,
+      enum: ["LIKED", "DISLIKED"],
+    },
     // Polymorphic reference to the content being liked
     likeable: {
       type: mongoose.Schema.Types.ObjectId,
@@ -55,4 +59,3 @@ export const Like = mongoose.model("Like", likeSchema);
 // );
 // // commentSchema.plugin(aggregatePaginate);
 // export const Like = mongoose.model("Like", likeSchema);
-

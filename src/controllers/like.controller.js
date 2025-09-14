@@ -34,6 +34,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     // Like didn't exist - create new
     await Like.create({
       owner: userId,
+      action:"LIKED",
       likeable: videoId,
       onModel: "Video",
     });
@@ -78,6 +79,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
       // Like didn't exist - create new
       await Like.create({
         owner: userId,
+        action:"LIKED",
         likeable: commentId,
         onModel: "Comment",
       });
@@ -122,6 +124,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
       // Like didn't exist - create new
       await Like.create({
         owner: userId,
+        action:"LIKED",
         likeable: tweetId,
         onModel: "Tweet",
       });
@@ -151,6 +154,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
       {
         $match: {
           owner: new mongoose.Types.ObjectId(userId),
+          action:"LIKED",
           onModel: "Video"
         }
       },
